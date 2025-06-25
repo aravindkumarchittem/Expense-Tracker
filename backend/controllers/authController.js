@@ -1,12 +1,61 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-const User = require('../models/userModel'); // make sure path is correct
+const User = require('../models/userModel'); // Ensure this path is correct
 
-// Ensure Mongoose connection (optional, handled in main entry usually)
+// Optional: Ensure Mongoose connection here, but it's usually handled in your main app entry
 if (!mongoose.connection.readyState) {
   mongoose.connect(process.env.MONGO_URI, { dbName: 'your-db-name' });
 }
+
+exports.signup = async (req, res) => {
+  if (req.method && req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  try {
+    const { username, email, password } = req.body;
+
+    // Check if user exists
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ error: 'User already exists with this email' });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create new user
+    const newUser = new User({
+      username,
+      email,
+      password: hashedPassword,
+    });
+
+    await newUser.save();
+
+    // Prepare payload for JWT
+    const payload = {
+      id: newUser._id,
+      username: newUser.username,
+      role: newUser.role,
+    };
+
+    // Sign JWT
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
+      expiresIn: `${process.env.JWT_EXPIRY || '1'}d`,
+    });
+
+    res.status(201).json({
+      message: 'User registered successfully',
+      accessToken: token,
+      user: payload,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Signup error' });
+  }
+};
 
 exports.login = async (req, res) => {
   if (req.method && req.method !== 'POST') {
