@@ -10,13 +10,7 @@
         {
             "src": "/(.*)",
             "dest": "/api/index.js",
-            "methods": [
-                "GET",
-                "POST",
-                "PATCH",
-                "DELETE",
-                "OPTIONS"
-            ]
+            
         }
     ]
 }
