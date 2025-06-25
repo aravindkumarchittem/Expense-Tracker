@@ -11,6 +11,7 @@ import Login from './pages/login';
 import Register from './pages/Register';
 
 const API_URL = import.meta.env.VITE_API_URL;
+console.log('API_URL:', API_URL); // Debugging
 
 function App() {
     const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -26,7 +27,16 @@ function App() {
                         Authorization: `Bearer ${token}`
                     }
                 });
-                if (!response.ok) throw new Error('Unauthorized');
+
+                console.log('Fetch status:', response.status);
+                console.log('Content-Type:', response.headers.get('content-type'));
+
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('Fetch expenses failed:', text);
+                    return;
+                }
+
                 const data = await response.json();
                 setExpenses(data);
             } catch (error) {
@@ -48,13 +58,14 @@ function App() {
                 body: JSON.stringify(expense)
             });
 
-            const data = await response.json();
+            const text = await response.text();
 
             if (!response.ok) {
-                console.error('Backend error:', data);
-                throw new Error(data.error || 'Failed to add expense');
+                console.error('Backend error:', text);
+                throw new Error('Failed to add expense');
             }
 
+            const data = JSON.parse(text);
             setExpenses(prev => [data, ...prev]);
         } catch (error) {
             console.error('Frontend error:', error);
@@ -73,9 +84,14 @@ function App() {
                 body: JSON.stringify(updates)
             });
 
-            if (!response.ok) throw new Error('Failed to update expense');
+            const text = await response.text();
 
-            const updatedExpense = await response.json();
+            if (!response.ok) {
+                console.error('Update failed:', text);
+                return;
+            }
+
+            const updatedExpense = JSON.parse(text);
             setExpenses(prev =>
                 prev.map(exp => (exp.id === id ? updatedExpense : exp))
             );
@@ -93,7 +109,12 @@ function App() {
                 }
             });
 
-            if (!response.ok) throw new Error('Failed to delete expense');
+            const text = await response.text();
+
+            if (!response.ok) {
+                console.error('Delete failed:', text);
+                return;
+            }
 
             setExpenses(prev => prev.filter(exp => exp.id !== id));
         } catch (error) {
