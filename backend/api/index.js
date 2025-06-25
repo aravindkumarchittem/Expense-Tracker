@@ -24,6 +24,8 @@ async function dbConnect() {
 app.use('/api/auth', authRoutes);
 app.use('/api/expenses', expenseRoutes);
 
+const handler = serverless(app);
+
 module.exports = async (req, res) => {
   await dbConnect();
   return serverless(app)(req, res);
