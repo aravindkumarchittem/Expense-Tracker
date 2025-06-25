@@ -1,8 +1,9 @@
 {
   "rewrites": [
     {
-      "source": "client",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
 }
+
