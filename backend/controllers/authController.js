@@ -1,16 +1,15 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
-import bcrypt from 'bcrypt';
-import jwt from 'jsonwebtoken';
-import mongoose from 'mongoose';
-import User from '../models/userModel'; // make sure path is correct
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
+const User = require('../models/userModel'); // make sure path is correct
 
-// Ensure Mongoose connection
+// Ensure Mongoose connection (optional, handled in main entry usually)
 if (!mongoose.connection.readyState) {
-  mongoose.connect(process.env.MONGO_URI!, { dbName: 'your-db-name' });
+  mongoose.connect(process.env.MONGO_URI, { dbName: 'your-db-name' });
 }
 
-export default async function handler(req: VercelRequest, res: VercelResponse) {
-  if (req.method !== 'POST') {
+exports.login = async (req, res) => {
+  if (req.method && req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
@@ -33,7 +32,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       role: existingUser.role,
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET!, {
+    const token = jwt.sign(payload, process.env.JWT_SECRET, {
       expiresIn: `${process.env.JWT_EXPIRY || '1'}d`,
     });
 
@@ -46,4 +45,4 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     console.error(err);
     return res.status(500).json({ error: 'Login error' });
   }
-}
+};
